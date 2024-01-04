@@ -8,17 +8,12 @@ import time
 from dotenv import load_dotenv, find_dotenv
 
 
-# load_dotenv(find_dotenv())
-
-OPENAI_API_KEY="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" 
-
-# OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-# os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+load_dotenv(find_dotenv())
+os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
 
 # Load the OpenAI API key from secrets.toml
-# api_key = st.secrets["OPENAI_API_KEY"]
+api_key = st.secrets["OPENAI_API_KEY"]
 
-api_key = OPENAI_API_KEY
 
 def initialize_openai_client(OPENAI_API_KEY):    
     return openai.OpenAI(api_key=OPENAI_API_KEY)
