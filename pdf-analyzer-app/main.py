@@ -4,36 +4,42 @@ import openai
 import streamlit as st
 from openai import OpenAI
 import json
-import time
 from dotenv import load_dotenv, find_dotenv
 
 
-load_dotenv(find_dotenv())
-os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+# Load environment variables from .env file
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+api_key = OPENAI_API_KEY
 
-# Load the OpenAI API key from secrets.toml
-api_key = st.secrets["OPENAI_API_KEY"]
 
-
+# Function to initialize the OpenAI client
 def initialize_openai_client(OPENAI_API_KEY):    
     return openai.OpenAI(api_key=OPENAI_API_KEY)
-    
+
+# Initialize the OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
 
+# Create a new OpenAI assistant
 assistant = client.beta.assistants.create(
-    name = "Finance Insight Analyst",
-    instructions = "You are a helpful  financial analyst expert and, focusing on management discussions and financial results. help people learn about financial needs and guid them towards fincial literacy.",
-    tools = [{"type":"code_interpreter"}, {"type": "retrieval"}],
-    model = "gpt-3.5-turbo-1106"
+    name="Medical Insight Analyst",
+    instructions="You are an AI-powered medical analysis assistant with expertise in providing insightful information about various health topics. Your role is to assist users in understanding medical reports, test results, and wellness advice. Focus on interpreting medical information, explaining potential implications, and offering guidance towards maintaining a healthy lifestyle. Your responses should be clear, accurate, and tailored to users seeking comprehensive insights into their health-related queries.",
+    tools=[{"type": "code_interpreter"}, {"type": "retrieval"}],
+    model="gpt-3.5-turbo-1106"
 )
 
+
+# Function to display the JSON representation of the assistant
 def show_json(obj):
     print(json.dumps(json.loads(obj.model_dump_json()), indent=4))
 
+# Display the JSON representation of the assistant
 show_json(assistant)
 
+# Create a new thread for communication
 thread = client.beta.threads.create()
 
+# Function to submit a user message to the assistant
 def submit_message(assistant_id, thread, user_message):
     client.beta.threads.messages.create(
         thread_id=thread.id, role="user", content=user_message
@@ -43,6 +49,7 @@ def submit_message(assistant_id, thread, user_message):
         assistant_id=assistant_id,
     )
 
+# Function to wait for the completion of a run
 def wait_on_run(run, thread):
     while run.status == "queued" or run.status == "in_progress":
         run = client.beta.threads.runs.retrieve(
@@ -52,9 +59,11 @@ def wait_on_run(run, thread):
         time.sleep(0.5)
     return run
 
+# Function to retrieve the assistant's response
 def get_response(thread):
     return client.beta.threads.messages.list(thread_id=thread.id, order="asc")
 
+# Function to pretty print the assistant's responses
 def pretty_print(messages):
     responses = []
     for m in messages:
@@ -63,6 +72,7 @@ def pretty_print(messages):
     return "\n".join(responses)
 
 
+# Streamlit app configuration and OpenAI client initialization
 st.sidebar.title("Configuration")
 entered_api_key = st.sidebar.text_input("Enter your OpenAI API key", type="password")
 
@@ -75,22 +85,29 @@ if entered_api_key:
 # Sidebar for selecting the assistant
 assistant_option = st.sidebar.selectbox(
     "Select an Assistant",
-    ("Financial Assistant", "PDF Analyzer")
+    ("Medical Assistant", "PDF Analyzer")
 )
 
-
-if assistant_option == "Financial Assistant":
-    st.title("Financial Assistants :bar_chart:")
+# App logic based on selected assistant
+if assistant_option == "Medical Assistant":
+    st.title("Medical Assistants")
 
     # Description
     st.markdown("""
-        This assistant is your go-to resource for financial insights and advice. Here's what you can do:
-        - :page_facing_up: **Analyze financial statements** to understand your company's health.
-        - :chart_with_upwards_trend: **Track market trends** and make informed investment decisions.
-        - :moneybag: Receive tailored **investment advice** to maximize your portfolio's performance.
-        - :bulb: **Explore various financial scenarios** and plan strategically for future ventures.
+       🩺 **Welcome to Your Medical Analysis Assistant!**
 
-        Simply enter your financial query below and let the assistant guide you with actionable insights.
+This assistant is your dedicated resource for medical insights and health guidance. Here's how it can assist you:
+
+- 📊 **Analyze Medical Reports**: Gain a detailed understanding of your health through the analysis of medical reports and test results.
+
+- 📈 **Track Health Trends**: Stay informed about your health trends and monitor changes over time for proactive wellness management.
+
+- 💡 **Personalized Wellness Advice**: Receive tailored advice on maintaining a healthy lifestyle based on your medical information.
+
+- 🌐 **Explore Health Scenarios**: Explore different health scenarios and understand potential outcomes to make informed decisions about your well-being.
+
+Simply enter your medical query or upload relevant documents below, and let the assistant provide you with insightful and actionable health information.
+
     """)
     user_query = st.text_input("Enter your financial query:")
 
@@ -103,19 +120,25 @@ if assistant_option == "Financial Assistant":
             response = pretty_print(response_messages)
             st.text_area("Response:", value=response, height=300)
 
-
 elif assistant_option == "PDF Analyzer":
     st.title("PDF Analyzer  :mag:")
 
     # Description for PDF Analyzer
     st.markdown("""
-        Use this tool to extract valuable information from PDF documents. Ideal for:
-        - :page_facing_up: **Analyzing text and data** within PDFs for research or business insights.
-        - :mag_right: **Extracting specific information** from large documents quickly.
-        - :clipboard: Converting **PDF content into actionable data** to inform decision-making.
-        - :bookmark_tabs: Gaining insights from **financial reports, research papers, or legal documents** in PDF format.
+       📄 **Welcome to Your Medical Document Analysis Tool!**
 
-        Upload a PDF file and enter your specific query related to the document.
+Use this tool to extract valuable information from medical documents. Ideal for:
+
+- 📑 **Analyzing Text and Data**: Extract meaningful insights from medical reports and documents for in-depth research and understanding.
+
+- 🔍 **Extracting Specific Information**: Quickly locate and extract specific details from extensive medical documents for efficient information retrieval.
+
+- 📋 **Converting to Actionable Data**: Transform medical PDF content into actionable data to make informed decisions about patient care and treatment plans.
+
+- 📚 **Gaining Insights from Medical Documents**: Extract valuable insights from medical reports, research papers, or other healthcare documents in PDF format.
+
+Simply upload a medical document and enter your specific query related to the document, and let the tool provide you with comprehensive insights for better healthcare decision-making.
+
     """)
 
     uploaded_file = st.file_uploader("Upload a PDF file", type=["pdf"])
@@ -137,11 +160,11 @@ elif assistant_option == "PDF Analyzer":
                     purpose="assistants",
                 )
                 assistant = client.beta.assistants.update(
-                    'asst_PWxRJ5oOqEHx0CisVEBpFgKI',
+                    assistant.id,
                     file_ids=[file_response.id],
                 )
                 thread = client.beta.threads.create()
-                run = submit_message('asst_PWxRJ5oOqEHx0CisVEBpFgKI', thread, user_query)
+                run = submit_message(assistant.id, thread, user_query)
                 run = wait_on_run(run, thread)
                 response_messages = get_response(thread)
                 response = pretty_print(response_messages)
