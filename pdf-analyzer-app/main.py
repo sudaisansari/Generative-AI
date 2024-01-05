@@ -15,7 +15,7 @@ api_key = OPENAI_API_KEY
 
 # Function to initialize the OpenAI client
 def initialize_openai_client(OPENAI_API_KEY):    
-    return openai.OpenAI(api_key=OPENAI_API_KEY)
+    return OpenAI(api_key=OPENAI_API_KEY)
 
 # Initialize the OpenAI client
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -109,10 +109,10 @@ This assistant is your dedicated resource for medical insights and health guidan
 Simply enter your medical query or upload relevant documents below, and let the assistant provide you with insightful and actionable health information.
 
     """)
-    user_query = st.text_input("Enter your financial query:")
+    user_query = st.text_input("Enter your query:")
 
-    if st.button('Get Financial Insight') and client:
-        with st.spinner('Fetching your financial insights...'):
+    if st.button('Get Medical Insight') and client:
+        with st.spinner('Fetching your Medical insights...'):
             thread = client.beta.threads.create()
             run = submit_message(assistant.id, thread, user_query)
             run = wait_on_run(run, thread)
